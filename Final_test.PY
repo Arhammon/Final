@@ -1,5 +1,7 @@
+###### Блок подключения библиотек
 import allure
 import requests
+import os # Библиотека для вспомогательной функции delete_files_in_folder("allure-result")
 
 ###### Блок параметрических переменных
 petid = 123457
@@ -22,14 +24,13 @@ allure_str = {
     "postz": "Отправка POST запроса",
     "putz": "Отправка PUT запроса",
     "getz": "Отправка GET запроса",
-    "delz": "Отправка GET запроса"
+    "delz": "Отправка DELETE запроса"
 }
-###### Блок переменных
 
-#### Вспомогательная функция для очистки результатов
+cUrl = url + str(petid)  #автоматическое собирание адреса эндпоинта путем добавления ИД
+
+###### Вспомогательная функция для очистки результатов запуска тестов (на функционал не влияет, можно закомментировать)
 def delete_files_in_folder(folder_path):
-    import os
-
     for filename in os.listdir(folder_path):
         file_path = os.path.join(folder_path, filename)
         try:
@@ -44,23 +45,21 @@ delete_files_in_folder("allure-result")
 
 ###### Блок тестов
 @allure.title("Функция создания питомца (POST/pet)")
-@allure.description(f"Проверка на код ответа операции POST/pet по адресу {url}")
+@allure.description(f"Проверка на код ответа операции POST/pet по адресу {url}. Питомец должен создаваться на сервере с автоматическим ID если он работает корректно.")
 @allure.epic(allure_str["epic"])
 @allure.feature(allure_str["feature"])
 @allure.story(allure_str["story"])
 def test_post_pet():
-    jpost = jdata  # создание копии массива для дальнейшей замены ИД на 0, как если бы присвоение корректно работало !!!!!!! питон не умеет копировать это получилась ссылка!!!!
-    jpostfix = jpost["id"]  # Временный фикс !!!!
-    jpost["id"] = 0
-
+    jpostfix = jdata["id"]  #Сохранение исходного значения элемента словаря перед изменением для обработки в функции 
+    jdata["id"] = 0 # Изменение ID на 0 для автоматического присвоения
     with allure.step(allure_str["postz"]):
-        respost = requests.post(url=url, json=jpost)
-        jpost["id"] = jpostfix  # Временный фикс !!!!
+        respost = requests.post(url=url, json=jdata)
+        jdata["id"] = jpostfix  #Возврат исходного значения элемента словаря после изменением для обработки в функции
         assert 200 == respost.status_code
 
 
-@allure.title("Функция создания питомца (PUT/pet)")
-@allure.description(f"Проверка на код ответа операции PUT/pet по адресу {url}")
+@allure.title("Функция обновления питомца (PUT/pet)")
+@allure.description(f"Проверка на код ответа операции PUT/pet по адресу {url}, верификация на соответствие ID в запросе и ответе сервера. Фактически создаёт нового питомца.")
 @allure.epic(allure_str["epic"])
 @allure.feature(allure_str["feature"])
 @allure.story(allure_str["story"])
@@ -75,14 +74,12 @@ def test_put_pet_id():
 
 
 @allure.title("Функция получения питомца (GET/pet)")
-@allure.description(f"Проверка на код ответа операции GET/pet по адресу {url}")
+@allure.description(f"Проверка на код ответа операции GET/pet по адресу {cUrl}, верификация на соответствие ID в запросе и ответе сервера.")
 @allure.epic(allure_str["epic"])
 @allure.feature(allure_str["feature"])
 @allure.story(allure_str["story"])
 def test_get_pet_id():
     with allure.step(allure_str["getz"]):
-        cUrl = url + str(petid)  # собирание адреса путем добавления ИД
-        print(cUrl)  # Дебаг
         resp = requests.get(cUrl)
     with allure.step("Проверка кода ответа"):
         assert 200 == resp.status_code
@@ -92,32 +89,28 @@ def test_get_pet_id():
 
 
 @allure.title("Функция удаления питомца (DELETE/pet)")
-@allure.description(f"Проверка на код ответа операции GET/pet по адресу {url}")
+@allure.description(f"Проверка на код ответа операции DELETE/pet по адресу {cUrl}")
 @allure.epic(allure_str["epic"])
 @allure.feature(allure_str["feature"])
 @allure.story(allure_str["story"])
 def test_del_pet_id():
-    with allure.step(allure_str["getz"]):
-        cUrl = url + str(petid)  # собирание адреса путем добавления ИД
-        print(cUrl)  # Дебаг
+    with allure.step(allure_str["delz"]):
         resp = requests.delete(cUrl)
     with allure.step("Проверка кода ответа"):
         assert 200 == resp.status_code
 
 
 @allure.title("Функция создания питомца (POST/pet) Негативное тестирование")
-@allure.description(f"Проверка на код ответа операции POST/pet по адресу {url}")
+@allure.description(f"Проверка на код ответа операции POST/pet по адресу {url}, отправка строкового значения вместо целочисленного")
 @allure.epic(allure_str["epic"])
 @allure.feature(allure_str["feature"])
 @allure.story(allure_str["story"])
 def test_postN_pet():
-    jpost = jdata  # создание копии массива для дальнейшей замены ИД на 0, как если бы присвоение корректно работало !!!!!!! питон не умеет копировать это получилась ссылка!!!!
-    jpostfix = jpost["id"]  # Временный фикс !!!!
-    jpost["id"] = "error"  # привносим ошибку
-
-    with allure.step(allure_str["delz"]):
-        respost = requests.post(url=url, json=jpost)
-        jpost["id"] = jpostfix  # Временный фикс !!!!
+    jpostfix = jdata["id"]  #Сохранение исходного значения элемента словаря перед изменением для обработки в функции 
+    jdata["id"] = "error"  # Привносим ошибку в ID
+    with allure.step(allure_str["postz"]):
+        respost = requests.post(url=url, json=jdata)
+        jdata["id"] = jpostfix  #Возврат исходного значения элемента словаря после изменением для обработки в функции 
         assert (
             500 == respost.status_code
         )  # сервер не может обработать запрос со строкой вместо ожидаемого инт
