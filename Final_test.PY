@@ -107,3 +107,17 @@ def test_del_pet_id():
     with allure.step("Проверка кода ответа"):
         assert 200 == resp.status_code
 
+@allure.title("Функция создания питомца (POST/pet) Негативное тестирование")
+@allure.description(f"Проверка на код ответа операции POST/pet по адресу {url}")
+@allure.epic(allure_str["epic"])
+@allure.feature(allure_str["feature"])
+@allure.story(allure_str["story"])
+def test_postN_pet():
+    jpost = jdata  # создание копии массива для дальнейшей замены ИД на 0, как если бы присвоение корректно работало !!!!!!! питон не умеет копировать это получилась ссылка!!!!
+    jpostfix = jpost["id"] # Временный фикс !!!!
+    jpost["id"] = "error" # привносим ошибку
+
+    with allure.step(allure_str["postz"]):
+        respost = requests.post(url=url, json=jpost)
+        jpost["id"] = jpostfix # Временный фикс !!!!
+        assert 500 == respost.status_code #сервер не может обработать запрос со строкой вместо ожидаемого инт
