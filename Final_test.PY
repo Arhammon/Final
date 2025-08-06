@@ -19,6 +19,7 @@ allure_str = {
     "story": "Итоговая работа",
     "postz": "Отправка POST запроса",
     "putz": "Отправка PUT запроса",
+    "getz": "Отправка GET запроса",
 }
 ###### Блок переменных
 ###### Документация
@@ -58,10 +59,6 @@ def test_post_pet():
 
     with allure.step(allure_str["postz"]):
         respost = requests.post(url=url, json=jpost)
-        print(respost.status_code) # Дебаг
-        print(pprint.pprint(respost.headers)) # Дебаг
-        print(pprint.pprint(respost.json())) # Дебаг
-        print(pprint.pprint(jdata)) # Дебаг
         jpost["id"] = jpostfix # Временный фикс !!!!
         assert 200 == respost.status_code
 
@@ -71,39 +68,42 @@ def test_post_pet():
 @allure.epic(allure_str["epic"])
 @allure.feature(allure_str["feature"])
 @allure.story(allure_str["story"])
+def test_put_pet_id():
+    with allure.step(allure_str["putz"]):
+        respost = requests.put(url=url, json=jdata, headers=headers)
+        resp = respost.json()
+    with allure.step("Проверка кода ответа"):
+        assert 200 == respost.status_code
+    with allure.step("Проверка соответствия ИД"):   
+        assert jdata["id"] == resp["id"]
+
+@allure.title("Функция получения питомца (GET/pet)")
+@allure.description(f"Проверка на код ответа операции GET/pet по адресу {url}")
+@allure.epic(allure_str["epic"])
+@allure.feature(allure_str["feature"])
+@allure.story(allure_str["story"])
 def test_get_pet_id():
-    respost = requests.put(url=url, json=jdata, headers=headers)
+    with allure.step(allure_str["getz"]):
+        cUrl = url + str(petid) #собирание адреса путем добавления ИД
+        print(cUrl) # Дебаг
+        resp = requests.get(cUrl)
+    with allure.step("Проверка кода ответа"):
+        assert 200 == resp.status_code
+    with allure.step("Проверка соответствия ИД"):  
+        resp = resp.json() # преобразование в Json  перед сравнением
+        assert jdata["id"] == resp["id"]
 
-    resp = respost.json()
 
-    print(respost.status_code) # Дебаг
-    print(pprint.pprint(respost.headers)) # Дебаг
-    print(pprint.pprint(respost.json())) # Дебаг
-    print(pprint.pprint(jdata)) # Дебаг
-    print(resp["id"]) # Дебаг
-    print(jdata["id"]) # Дебаг
-    assert 200 == respost.status_code
-    assert jdata["id"] == resp["id"]
+@allure.title("Функция удаления питомца (DELETE/pet)")
+@allure.description(f"Проверка на код ответа операции GET/pet по адресу {url}")
+@allure.epic(allure_str["epic"])
+@allure.feature(allure_str["feature"])
+@allure.story(allure_str["story"])
+def test_del_pet_id():
+    with allure.step(allure_str["getz"]):
+        cUrl = url + str(petid) #собирание адреса путем добавления ИД
+        print(cUrl) # Дебаг
+        resp = requests.delete(cUrl)
+    with allure.step("Проверка кода ответа"):
+        assert 200 == resp.status_code
 
-test_post_pet()    
-test_get_pet_id()
-
-# @allure.title("Функция создания питомца (PUT/pet)")
-# @allure.description(f"Проверка на код ответа операции PUT/pet по адресу {url}")
-# @allure.epic(allure_str["epic"])
-# @allure.feature(allure_str["feature"])
-# @allure.story(allure_str["story"])
-# def test_get_pet_id():
-#     respost = requests.put(url=url, json=jdata, headers=headers)
-
-#     resp = requests.get("https://petstore.swagger.io/v2/pet/" + str(petid))
-
-#     print(respost.status_code)
-#     print(pprint.pprint(respost.headers))
-#     print(pprint.pprint(respost.json()))
-#     print(resp.status_code)
-#     print(pprint.pprint(resp.headers))
-#     print(pprint.pprint(resp.json()))
-
-#     assert 200 == respost.status_code
-# test_get_pet_id()
