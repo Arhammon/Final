@@ -1,7 +1,9 @@
 ###### Блок подключения библиотек
+import copy
+import pprint  # Библиотека для форматирования ответов для модульного тестирования в момент разработки
 import allure
 import requests
-import os # Библиотека для вспомогательной функции delete_files_in_folder("allure-result")
+import os  # Библиотека для вспомогательной функции delete_files_in_folder("allure-result")
 
 ###### Блок параметрических переменных
 petid = 123457
@@ -24,10 +26,11 @@ allure_str = {
     "postz": "Отправка POST запроса",
     "putz": "Отправка PUT запроса",
     "getz": "Отправка GET запроса",
-    "delz": "Отправка DELETE запроса"
+    "delz": "Отправка DELETE запроса",
 }
 
-cUrl = url + str(petid)  #автоматическое собирание адреса эндпоинта путем добавления ИД
+cUrl = url + str(petid)  # автоматическое собирание адреса эндпоинта путем добавления ИД
+
 
 ###### Вспомогательная функция для очистки результатов запуска тестов (на функционал не влияет, можно закомментировать)
 def delete_files_in_folder(folder_path):
@@ -45,21 +48,26 @@ delete_files_in_folder("allure-result")
 
 ###### Блок тестов
 @allure.title("Функция создания питомца (POST/pet)")
-@allure.description(f"Проверка на код ответа операции POST/pet по адресу {url}. Питомец должен создаваться на сервере с автоматическим ID если он работает корректно.")
+@allure.description(
+    f"Проверка на код ответа операции POST/pet по адресу {url}. Питомец должен создаваться на сервере с автоматическим ID если он работает корректно."
+)
 @allure.epic(allure_str["epic"])
 @allure.feature(allure_str["feature"])
 @allure.story(allure_str["story"])
 def test_post_pet():
-    jpostfix = jdata["id"]  #Сохранение исходного значения элемента словаря перед изменением для обработки в функции 
-    jdata["id"] = 0 # Изменение ID на 0 для автоматического присвоения
+    internaldict = copy.deepcopy(
+        jdata
+    )  # передача данных в функцию по значению, что безопаснее, читаемее, но менее производительно
+    internaldict["id"] = 0  # Изменение ID на 0 для автоматического присвоения
     with allure.step(allure_str["postz"]):
-        respost = requests.post(url=url, json=jdata)
-        jdata["id"] = jpostfix  #Возврат исходного значения элемента словаря после изменением для обработки в функции
+        respost = requests.post(url=url, json=internaldict)
         assert 200 == respost.status_code
 
 
 @allure.title("Функция обновления питомца (PUT/pet)")
-@allure.description(f"Проверка на код ответа операции PUT/pet по адресу {url}, верификация на соответствие ID в запросе и ответе сервера. Фактически создаёт нового питомца.")
+@allure.description(
+    f"Проверка на код ответа операции PUT/pet по адресу {url}, верификация на соответствие ID в запросе и ответе сервера. Фактически создаёт нового питомца."
+)
 @allure.epic(allure_str["epic"])
 @allure.feature(allure_str["feature"])
 @allure.story(allure_str["story"])
@@ -74,7 +82,9 @@ def test_put_pet_id():
 
 
 @allure.title("Функция получения питомца (GET/pet)")
-@allure.description(f"Проверка на код ответа операции GET/pet по адресу {cUrl}, верификация на соответствие ID в запросе и ответе сервера.")
+@allure.description(
+    f"Проверка на код ответа операции GET/pet по адресу {cUrl}, верификация на соответствие ID в запросе и ответе сервера."
+)
 @allure.epic(allure_str["epic"])
 @allure.feature(allure_str["feature"])
 @allure.story(allure_str["story"])
@@ -101,16 +111,19 @@ def test_del_pet_id():
 
 
 @allure.title("Функция создания питомца (POST/pet) Негативное тестирование")
-@allure.description(f"Проверка на код ответа операции POST/pet по адресу {url}, отправка строкового значения вместо целочисленного")
+@allure.description(
+    f"Проверка на код ответа операции POST/pet по адресу {url}, отправка строкового значения вместо целочисленного"
+)
 @allure.epic(allure_str["epic"])
 @allure.feature(allure_str["feature"])
 @allure.story(allure_str["story"])
 def test_postN_pet():
-    jpostfix = jdata["id"]  #Сохранение исходного значения элемента словаря перед изменением для обработки в функции 
-    jdata["id"] = "error"  # Привносим ошибку в ID
+    internaldict = copy.deepcopy(
+        jdata
+    )  # передача данных в функцию по значению, что безопаснее, читаемее, но менее производительно
+    internaldict["id"] = "error"  # Привносим ошибку в ID
     with allure.step(allure_str["postz"]):
-        respost = requests.post(url=url, json=jdata)
-        jdata["id"] = jpostfix  #Возврат исходного значения элемента словаря после изменением для обработки в функции 
+        respost = requests.post(url=url, json=internaldict)
         assert (
             500 == respost.status_code
         )  # сервер не может обработать запрос со строкой вместо ожидаемого инт
