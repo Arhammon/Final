@@ -11,3 +11,5 @@ pip install allure-pytest
 pytest --alluredir allure-result
 allure serve .\allure-result\
 ```
+
+# Если ломается пайтест переименовать *.PY в *.py
